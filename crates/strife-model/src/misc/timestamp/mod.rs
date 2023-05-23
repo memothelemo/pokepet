@@ -7,7 +7,6 @@ const DISCORD_EPOCH_MS: i64 = 1420070400000;
 
 pub(crate) mod serde_impl;
 
-// TODO: add (it will deserialize u64 to seconds by default smth)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Timestamp(OffsetDateTime);
 

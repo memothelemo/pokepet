@@ -70,6 +70,7 @@ impl_ids! {
   pub struct GuildId;
   pub struct RoleId;
   pub struct IntegrationId;
+  pub struct IntegrationApplicationId;
   pub struct RoleSubscriptionSkuId;
   pub struct WebhookId;
 

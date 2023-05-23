@@ -1,9 +1,11 @@
-use crate::{
-  id::RoleId,
-  misc::{ImageHash, Permissions, Timestamp},
-  user::User,
-};
+use crate::id::RoleId;
+use crate::misc::{ImageHash, Permissions, Timestamp};
+use crate::user::User;
+
 use serde::{Deserialize, Serialize};
+
+mod flags;
+pub use flags::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct GuildMember {
@@ -21,7 +23,7 @@ pub struct GuildMember {
   pub deafen: bool,
   #[serde(rename = "mute")]
   pub muted: bool,
-  // TODO: flags
+  pub flags: GuildMemberFlags,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub pending: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
