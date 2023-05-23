@@ -1,8 +1,8 @@
-use crate::internal::macros::enum_int;
+use crate::internal::macros::enum_repr;
 
-enum_int! {
+enum_repr! {
   // TODO: rename something descriptive
-  pub enum UserPremiumType {
+  pub enum UserPremiumType(u8) {
     None = 0,
     Classic,
     Nitro,
@@ -17,9 +17,9 @@ mod tests {
 
   #[test]
   fn serde() {
-    assert_tokens(&UserPremiumType::None, &[Token::U64(0)]);
-    assert_tokens(&UserPremiumType::Classic, &[Token::U64(1)]);
-    assert_tokens(&UserPremiumType::Nitro, &[Token::U64(2)]);
-    assert_tokens(&UserPremiumType::Basic, &[Token::U64(3)]);
+    assert_tokens(&UserPremiumType::None, &[Token::U8(0)]);
+    assert_tokens(&UserPremiumType::Classic, &[Token::U8(1)]);
+    assert_tokens(&UserPremiumType::Nitro, &[Token::U8(2)]);
+    assert_tokens(&UserPremiumType::Basic, &[Token::U8(3)]);
   }
 }

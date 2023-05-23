@@ -1,7 +1,7 @@
-use crate::internal::macros::enum_int;
+use crate::internal::macros::enum_repr;
 
-enum_int! {
-  pub enum ConnectionVisibility: strict {
+enum_repr! {
+  pub enum ConnectionVisibility(u8): strict {
     None = 0,
     Everyone = 1,
   }
@@ -14,7 +14,7 @@ mod tests {
 
   #[test]
   fn serde() {
-    assert_tokens(&ConnectionVisibility::None, &[Token::U64(0)]);
-    assert_tokens(&ConnectionVisibility::Everyone, &[Token::U64(1)]);
+    assert_tokens(&ConnectionVisibility::None, &[Token::U8(0)]);
+    assert_tokens(&ConnectionVisibility::Everyone, &[Token::U8(1)]);
   }
 }

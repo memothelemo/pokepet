@@ -40,61 +40,219 @@ macro_rules! bitflags {
 }
 pub(crate) use bitflags;
 
-macro_rules! enum_int {
-  (impl base for $Name:ident) => {
-    impl $Name {
-      pub const fn value(&self) -> u64 {
-        *self as u64
-      }
-    }
-
-    impl<'de> serde::Deserialize<'de> for $Name {
-      fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-      where
-        D: serde::Deserializer<'de>,
-      {
-        struct Visitor;
-
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-          type Value = $Name;
-
-          fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.write_str(concat!(stringify!($Name), " type (integer)"))
-          }
-
-          fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-          where
-            E: serde::de::Error,
-          {
-            $Name::__internal_enum_int(value).ok_or_else(|| {
-              crate::internal::macros::log_warn!(
-                concat!("unknown ", stringify!($Name), " variant: {}"),
-                value
-              );
-              serde::de::Error::custom(format!(
-                concat!("unknown ", stringify!($Name), " variant: {}"),
-                value
-              ))
-            })
-          }
-        }
-
-        deserializer.deserialize_u64(Visitor)
-      }
-    }
-
-    impl serde::Serialize for $Name {
-      fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-      where
-        S: serde::Serializer,
-      {
-        serializer.serialize_u64(self.value())
-      }
-    }
-  };
+macro_rules! enum_string {
   {$(
     $( #[$EnumMeta:meta] )*
     $vis:vis enum $Name:ident {
+      $(
+        $( #[$VariantMeta:meta] )*
+        $Variant:ident = $Discriminator:expr,
+      )*
+    }
+  )*} => {$(
+    $( #[$EnumMeta] )*
+    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+    #[non_exhaustive]
+    $vis enum $Name {
+      $(
+        $( #[$VariantMeta] )*
+        $Variant,
+      )*
+      Unknown(String),
+    }
+
+    impl ::std::fmt::Display for $Name {
+      fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+          $( Self::$Variant => f.write_str($Discriminator), )*
+          Self::Unknown(n) => n.fmt(f),
+        }
+      }
+    }
+
+    impl<'de> ::serde::Deserialize<'de> for $Name {
+      fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error>
+      where
+        D: ::serde::Deserializer<'de>,
+      {
+        struct Visitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for Visitor {
+          type Value = $Name;
+
+          fn expecting(&self, f: &mut std::fmt::Formatter) -> ::std::fmt::Result {
+            write!(f, concat!(stringify!($Name), " string type"))
+          }
+
+          fn visit_str<E>(self, value: &str) -> ::core::result::Result<Self::Value, E>
+          where
+            E: ::serde::de::Error,
+          {
+            match value {
+              $( $Discriminator => Ok($Name::$Variant), )*
+              _ => {
+                crate::internal::macros::log_warn!(
+                  concat!("unknown ", stringify!($Name), " variant: {}"),
+                  value,
+                );
+                Ok($Name::Unknown(value.to_string()))
+              }
+            }
+          }
+        }
+
+        deserializer.deserialize_str(Visitor)
+      }
+    }
+
+    impl ::serde::Serialize for $Name {
+      fn serialize<S>(&self, serializer: S) -> ::core::result::Result<S::Ok, S::Error>
+      where
+        S: ::serde::Serializer,
+      {
+        serializer.collect_str(self)
+      }
+    }
+  )*};
+  {$(
+    $( #[$EnumMeta:meta] )*
+    $vis:vis enum $Name:ident : strict {
+      $(
+        $( #[$VariantMeta:meta] )*
+        $Variant:ident = $Discriminator:expr,
+      )*
+    }
+  )*} => {$(
+    $( #[$EnumMeta] )*
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[non_exhaustive]
+    $vis enum $Name {
+      $(
+        $( #[$VariantMeta] )*
+        $Variant,
+      )*
+    }
+
+    impl ::std::fmt::Display for $Name {
+      fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+          $( Self::$Variant => f.write_str($Discriminator), )*
+        }
+      }
+    }
+
+    impl<'de> ::serde::Deserialize<'de> for $Name {
+      fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error>
+      where
+        D: ::serde::Deserializer<'de>,
+      {
+        struct Visitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for Visitor {
+          type Value = $Name;
+
+          fn expecting(&self, f: &mut std::fmt::Formatter) -> ::std::fmt::Result {
+            write!(f, concat!(stringify!($Name), " string type"))
+          }
+
+          fn visit_str<E>(self, value: &str) -> ::core::result::Result<Self::Value, E>
+          where
+            E: ::serde::de::Error,
+          {
+            match value {
+              $( $Discriminator => Ok($Name::$Variant), )*
+              _ => {
+                crate::internal::macros::log_warn!(
+                  concat!("unknown ", stringify!($Name), " variant: {}"),
+                  value,
+                );
+                Err(::serde::de::Error::custom(format!(
+                  concat!("unknown ", stringify!($Name), " variant: {}"),
+                  value
+                )))
+              }
+            }
+          }
+        }
+
+        deserializer.deserialize_str(Visitor)
+      }
+    }
+
+    impl ::serde::Serialize for $Name {
+      fn serialize<S>(&self, serializer: S) -> ::core::result::Result<S::Ok, S::Error>
+      where
+        S: ::serde::Serializer,
+      {
+        serializer.collect_str(self)
+      }
+    }
+  )*};
+}
+pub(crate) use enum_string;
+
+macro_rules! enum_repr {
+  {$(
+    $( #[$EnumMeta:meta] )*
+    $vis:vis enum $Name:ident($Repr:ty): strict {
+      $(
+        $( #[$VariantMeta:meta] )*
+        $Variant:ident $( = $Value:expr )?,
+      )*
+    }
+  )*} => {$(
+    $( #[$EnumMeta] )*
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[repr($Repr)]
+    #[non_exhaustive]
+    $vis enum $Name {
+      $(
+        $( #[$VariantMeta] )*
+        $Variant $( = $Value )?,
+      )*
+    }
+
+    impl<'de> ::serde::Deserialize<'de> for $Name {
+      fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error>
+      where
+        D: ::serde::Deserializer<'de>,
+      {
+        #[allow(non_camel_case_types)]
+        struct discriminators;
+        #[allow(non_upper_case_globals)]
+        impl discriminators {
+          $( const $Variant: $Repr = $Name::$Variant as $Repr; )*
+        }
+
+        let value = <$Repr as ::serde::Deserialize>::deserialize(deserializer)?;
+        match value {
+          $( discriminators::$Variant => Ok(Self::$Variant), )*
+          _ => {
+            $crate::internal::macros::log_warn!(
+              concat!("unknown ", stringify!($Name), " variant: {}"),
+              value
+            );
+            ::core::result::Result::Err(serde::de::Error::custom(format!(
+              concat!("unknown ", stringify!($Name), " variant: {}"),
+              value
+            )))
+          }
+        }
+      }
+    }
+
+    impl ::serde::Serialize for $Name {
+      fn serialize<S>(&self, serializer: S) -> ::core::result::Result<S::Ok, S::Error>
+      where
+        S: ::serde::Serializer,
+      {
+        (*self as $Repr).serialize(serializer)
+      }
+    }
+  )*};
+  {$(
+    $( #[$EnumMeta:meta] )*
+    $vis:vis enum $Name:ident($Repr:ty) {
       $(
         $( #[$VariantMeta:meta] )*
         $Variant:ident $( = $Value:expr )?,
@@ -107,85 +265,41 @@ macro_rules! enum_int {
     $vis enum $Name {
       $(
         $( #[$VariantMeta] )*
-        $Variant $( = $Value )?,
+        $Variant,
       )*
-      Unknown = !0,
+      Unknown($Repr),
     }
 
-    impl $Name {
-      #[doc(hidden)]
-      fn __internal_enum_int(value: u64) -> Option<Self> {
-        match value {
-          $( _ if value == $Name::$Variant.value() => Some(Self::$Variant), )*
-          _ => Some(Self::Unknown),
-        }
-      }
-    }
-
-    $crate::internal::macros::enum_int!(impl base for $Name);
-  )*};
-  {$(
-    $( #[$EnumMeta:meta] )*
-    $vis:vis enum $Name:ident: strict {
-      $( $Variant:ident $( = $Value:expr )?, )*
-    }
-  )*} => {$(
-    $( #[$EnumMeta] )*
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    #[non_exhaustive]
-    $vis enum $Name {
-      $( $Variant $( = $Value )?, )*
-    }
-
-    impl $Name {
-      #[doc(hidden)]
-      fn __internal_enum_int(value: u64) -> Option<Self> {
-        match value {
-          $( _ if value == $Name::$Variant.value() => Some(Self::$Variant), )*
-          _ => None,
-        }
-      }
-    }
-
-    $crate::internal::macros::enum_int!(impl base for $Name);
-  )*};
-}
-pub(crate) use enum_int;
-
-macro_rules! enum_string {
-  (impl base for $Name:ident) => {
-    impl<'de> serde::Deserialize<'de> for $Name {
+    impl<'de> ::serde::Deserialize<'de> for $Name {
       fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
       where
         D: serde::Deserializer<'de>,
       {
-        struct Visitor;
-
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-          type Value = $Name;
-
-          fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.write_str(concat!(stringify!($Name), " enum"))
-          }
-
-          fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-          where
-            E: serde::de::Error,
-          {
-            $Name::__internal_enum_string(value).ok_or_else(|| {
-              crate::internal::macros::log_warn!(
-                concat!("unknown ", stringify!($Name), " variant: {:?}"),
-                value
-              );
-              serde::de::Error::custom(format!(
-                concat!("unknown ", stringify!($Name), " variant: {:?}"),
-                value
-              ))
-            })
-          }
+        #[allow(non_camel_case_types)]
+        #[repr($Repr)]
+        enum repr_enum {
+          $( $Variant $( = $Value )?, )*
         }
 
-        deserializer.deserialize_str(Visitor)
+        #[allow(non_camel_case_types)]
+        struct discriminators;
+
+        #[allow(non_upper_case_globals)]
+        impl discriminators {
+          $( const $Variant: $Repr = repr_enum::$Variant as $Repr; )*
+        }
+
+        let value = <$Repr as serde::Deserialize>::deserialize(deserializer)?;
+        match value {
+          $( discriminators::$Variant => Ok(Self::$Variant), )*
+          _ => {
+            $crate::internal::macros::log_warn!(
+              concat!("unknown ", stringify!($Name), " variant: {}"),
+              value
+            );
+            Ok(Self::Unknown(value))
+          },
+        }
       }
     }
 
@@ -194,92 +308,22 @@ macro_rules! enum_string {
       where
         S: serde::Serializer,
       {
-        serializer.collect_str(self)
-      }
-    }
-  };
-  {$(
-    $( #[$EnumMeta:meta] )*
-    $vis:vis enum $Name:ident {
-      $(
-        $( #[$VariantMeta:meta] )*
-        $Variant:ident = $Value:expr,
-      )*
-    }
-  )*} => {$(
-    $( #[$EnumMeta] )*
-    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-    #[non_exhaustive]
-    pub enum $Name {
-      $(
-        $( #[$VariantMeta] )*
-        $Variant,
-      )*
-      Unknown(String),
-    }
-
-    impl $Name {
-      #[doc(hidden)]
-      fn __internal_enum_string(value: &str) -> Option<Self> {
-        match value {
-          $( $Value => Some(Self::$Variant), )*
-          _ => Some(Self::Unknown(value.to_string())),
+        #[allow(non_camel_case_types)]
+        #[repr($Repr)]
+        enum discriminators {
+          $( $Variant $( = $Value )?, )*
         }
-      }
-    }
 
-    impl std::fmt::Display for $Name {
-      fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-          $( Self::$Variant => f.write_str($Value), )*
-          Self::Unknown(n) => n.fmt(f),
+          $( Self::$Variant => discriminators::$Variant as $Repr, )*
+          Self::Unknown(n) => *n,
         }
+        .serialize(serializer)
       }
     }
-
-    $crate::internal::macros::enum_string!(impl base for $Name);
-  )*};
-  {$(
-    $( #[$EnumMeta:meta] )*
-    $vis:vis enum $Name:ident : strict {
-      $(
-        $( #[$VariantMeta:meta] )*
-        $Variant:ident = $Value:expr,
-      )*
-    }
-  )*} => {$(
-    $( #[$EnumMeta] )*
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    #[non_exhaustive]
-    pub enum $Name {
-      $(
-        $( #[$VariantMeta] )*
-        $Variant,
-      )*
-    }
-
-    impl $Name {
-      #[doc(hidden)]
-      fn __internal_enum_string(value: &str) -> Option<Self> {
-        match value {
-          $( $Value => Some(Self::$Variant), )*
-          _ => None,
-        }
-      }
-    }
-
-    impl std::fmt::Display for $Name {
-      fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-          $( Self::$Variant => f.write_str($Value), )*
-        }
-      }
-    }
-
-    $crate::internal::macros::enum_string!(impl base for $Name);
   )*};
 }
-pub(crate) use enum_string;
+pub(crate) use enum_repr;
 
 #[cfg(not(feature = "tracing"))]
 macro_rules! log_warn {

@@ -9,3 +9,4 @@ proc-macro = true
 [dependencies]
 heck = "0.4.1"
 syn = "2.0.8"
+quote = "1.0.26"

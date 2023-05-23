@@ -1,7 +1,7 @@
-use crate::internal::macros::enum_int;
+use crate::internal::macros::enum_repr;
 
-enum_int! {
-  pub enum ActivityType: strict {
+enum_repr! {
+  pub enum ActivityType(u8): strict {
     Game = 0,
     Streaming = 1,
     Listening = 2,

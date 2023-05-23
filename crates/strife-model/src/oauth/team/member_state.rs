@@ -1,7 +1,7 @@
-use crate::internal::macros::enum_int;
+use crate::internal::macros::enum_repr;
 
-enum_int! {
-  pub enum TeamMemberState {
+enum_repr! {
+  pub enum TeamMemberState(u8): strict {
     Invited = 1,
     Accepted,
   }
@@ -14,7 +14,7 @@ mod tests {
 
   #[test]
   fn serde() {
-    assert_tokens(&TeamMemberState::Invited, &[Token::U64(1)]);
-    assert_tokens(&TeamMemberState::Accepted, &[Token::U64(2)]);
+    assert_tokens(&TeamMemberState::Invited, &[Token::U * (1)]);
+    assert_tokens(&TeamMemberState::Accepted, &[Token::U * (2)]);
   }
 }
