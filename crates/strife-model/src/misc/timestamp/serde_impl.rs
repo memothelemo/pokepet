@@ -171,16 +171,6 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
         f.write_str("RFC 3339 timestamp")
       }
 
-      // fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
-      // where
-      //   E: serde::de::Error,
-      // {
-      //   Timestamp::from_secs(v as i64).map_err(|v| {
-      //     crate::internal::macros::log_warn!("{} is invalid Unix timestamp!", v);
-      //     serde::de::Error::custom(v)
-      //   })
-      // }
-
       fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
       where
         E: serde::de::Error,
