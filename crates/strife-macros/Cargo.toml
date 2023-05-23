@@ -1,0 +1,11 @@
+[package]
+name = "strife-macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+heck = "0.4.1"
+syn = "2.0.8"

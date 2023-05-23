@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+strife-macros = { workspace = true }
+
 bitflags = { workspace = true }
 error-stack = { workspace = true }
 serde = { workspace = true }
