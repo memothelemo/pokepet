@@ -1,0 +1,34 @@
+{
+    "t": "TYPING_START",
+    "s": 5,
+    "op": 0,
+    "d": {
+        "user_id": "277090976139313152",
+        "timestamp": 1684663659,
+        "member": {
+            "user": {
+                "username": "memothelemo",
+                "public_flags": 64,
+                "id": "277090976139313152",
+                "global_name": null,
+                "display_name": null,
+                "discriminator": "1580",
+                "bot": false,
+                "avatar_decoration": null,
+                "avatar": "fd99234253681d4d61e026a818e23d48"
+            },
+            "roles": [],
+            "premium_since": null,
+            "pending": false,
+            "nick": null,
+            "mute": false,
+            "joined_at": "2021-10-05T13:43:30.002000+00:00",
+            "flags": 0,
+            "deaf": false,
+            "communication_disabled_until": null,
+            "avatar": null
+        },
+        "channel_id": "894942880693633057",
+        "guild_id": "894942880693633054"
+    }
+}

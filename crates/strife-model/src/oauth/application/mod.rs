@@ -14,6 +14,7 @@ pub use install_params::*;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct PartialApplication {
   pub id: ApplicationId,
+  pub flags: ApplicationFlags,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]

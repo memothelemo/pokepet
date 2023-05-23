@@ -1,9 +1,0 @@
-# Built directories
-/node_modules
-/build
-
-# Logs
-*.log
-
-# Typescript cache
-*.tsbuildinfo
