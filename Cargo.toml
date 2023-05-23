@@ -2,6 +2,8 @@
 members = ["crates/*"]
 
 [workspace.dependencies]
+strife-macros = { path = "crates/strife-macros" }
+
 bitflags = "2.1.0"
 error-stack = { git = "https://github.com/memothelemo/error-stack" }
 serde = { version = "^1", features = ["derive"] }

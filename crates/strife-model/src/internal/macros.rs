@@ -1,3 +1,14 @@
+macro_rules! event_type {
+  ($Name:ident, { $( $Type:ident, )* }) => {
+    $crate::internal::macros::enum_string! {
+      pub enum $Name {
+        $( $Type = ::strife_macros::shouting_snake_case_str!($Type), )*
+      }
+    }
+  };
+}
+pub(crate) use event_type;
+
 macro_rules! bitflags {
   (
     $( #[$outer:meta] )*
