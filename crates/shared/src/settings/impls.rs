@@ -108,7 +108,7 @@ mod tests {
       let generated_token = generate_bot_token();
       jail.set_env("POKEPET_DATABASE_POOL_TIMEOUT_SECS", POOL_TIMEOUT_SECS);
       jail.set_env("POKEPET_DATABASE_POOL_SIZE", POOL_SIZE);
-      jail.set_env("POKEPET_BOT_TOKEN", generated_token);
+      jail.set_env("POKEPET_BOT_TOKEN", &generated_token);
 
       let settings = Settings::figment().extract::<Settings>().unwrap();
       assert_eq!(settings.database.pool_timeout_secs.get(), POOL_TIMEOUT_SECS);
