@@ -1,0 +1,15 @@
+[package]
+name = "pokepet-instance"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+pokepet-db.workspace = true
+
+[build-dependencies]
+# To print out default data with doku and save it to config/example.toml
+pokepet-shared.workspace = true

@@ -1,0 +1,11 @@
+[package]
+name = "pokepet-db"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+pokepet-shared.workspace = true
