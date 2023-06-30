@@ -43,7 +43,7 @@ jobs:
           components: llvm-tools-preview
 
       - name: Perform tests
-        uses: action-rs/cargo@v1
+        uses: actions-rs/cargo@v1
         with:
           command: test
           args: --all-features --all-targets
