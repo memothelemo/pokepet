@@ -4,6 +4,11 @@ use doku::Document;
 use serde::Deserialize;
 use smart_default::SmartDefault;
 
+mod error;
+mod impls;
+
+pub use error::*;
+
 #[derive(Debug, Clone, Deserialize, Document, SmartDefault)]
 #[serde(default)]
 pub struct Settings {
@@ -39,8 +44,7 @@ pub struct BotConfig {
 #[serde(default)]
 pub struct DatabaseConfig {
   #[doku(as = "String", example = "redis://localhost:6379")]
-  #[default("unset")]
-  pub cache: String,
+  pub cache: Option<String>,
   #[doku(as = "String", example = "postgres://postgres@localhost")]
   #[default("unset")]
   pub uri: String,

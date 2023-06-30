@@ -9,6 +9,7 @@ repository.workspace = true
 
 [dependencies]
 pokepet-db.workspace = true
+pokepet-shared.workspace = true
 
 [build-dependencies]
 # To print out default data with doku and save it to config/example.toml
