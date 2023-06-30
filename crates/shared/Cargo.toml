@@ -8,3 +8,10 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+doku.workspace = true
+dotenvy.workspace = true
+error-stack.workspace = true
+figment.workspace = true
+serde.workspace = true
+smart-default.workspace = true
+thiserror.workspace = true
