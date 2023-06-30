@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    - main
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  commit_check:
+    name: Conventional Commit Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git config --global user.email github-actions@github.com
+          git config --global user.name github-actions
+
+      - name: Checking commits
+        uses: cocogitto/cocogitto-action@v3.5
+        with:
+          git-user: 'github-actions'
+          git-user-email: 'github-actions@github.com'
