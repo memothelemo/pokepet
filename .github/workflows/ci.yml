@@ -14,7 +14,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: |
+      - name: Setup git profile
+        run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git config --global user.email github-actions@github.com
@@ -42,20 +43,14 @@ jobs:
           override: true
           components: llvm-tools-preview
 
-      - name: Perform tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --all-targets
-
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
-      - name: Perform test coverage
+      - name: Perform tests
         uses: actions-rs/cargo@v1
         with:
           command: llvm-cov
-          args: --all-features --workspace --lcov --output-path lcov.info
+          args: --all-features --all-targets --workspace --lcov --output-path lcov.info
 
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
@@ -65,4 +60,5 @@ jobs:
           files: lcov.info
           fail_ci_if_error: true
 
-      - uses: Swatinem/rust-cache@v1
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
