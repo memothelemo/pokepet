@@ -9,3 +9,8 @@ repository.workspace = true
 
 [dependencies]
 pokepet-shared.workspace = true
+
+error-stack.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

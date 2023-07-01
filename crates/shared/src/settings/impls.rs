@@ -1,139 +1,165 @@
-use figment::providers::{Env, Format, Toml};
-use figment::value::UncasedStr;
-use figment::Figment;
+// Implementations of super::Settings and the rest of structs
+use super::{DatabaseConnection, DatabaseConnectionParts};
+use doku::Document;
 
-use error_stack::{IntoReport, Result, ResultExt};
-use once_cell::sync::Lazy;
-use std::collections::HashMap;
+use serde::de::Error as SerdeError;
+use serde::Deserialize;
 
-use super::{Settings, SettingsError};
+// I avoid using #[serde(untagged)] because you don't know what
+// is the actual cause of the error if one variant (supposed to be matched)
+// fails to deserialize
+impl<'de> Deserialize<'de> for DatabaseConnection {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    struct DatabaseConnectionVisitor;
 
-const DEFAULT_CONFIG_FILE: &str = "config/config.toml";
-
-// It converts commonly mistaked variables given from Figment
-// into its correct ones because I'm too lazy to modify to handle
-// deserialization and error handling each of every environment variables.
-static PREFIX_ENV_ALIASES: Lazy<HashMap<&'static str, &UncasedStr>> = Lazy::new(|| {
-  let mut map = HashMap::new();
-  map.insert("DATABASE.POOL.SIZE", "database.pool_size".into());
-  map.insert(
-    "DATABASE.POOL.TIMEOUT.SECS",
-    "database.pool_timeout_secs".into(),
-  );
-  map
-});
-
-// Other aliases for 'POKEPET_BOT_TOKEN' so that Discord
-// bot hosting providers will be happy and also for lazy people.
-static BOT_TOKEN_ALIASES: &[&str] = &["BOT_TOKEN", "DISCORD_TOKEN", "TOKEN"];
-
-impl Settings {
-  pub fn init() -> Result<Self> {
-    dotenvy::dotenv().ok();
-
-    let config = Self::figment()
-      .extract::<Self>()
-      .into_report()
-      .change_context(SettingsError::Parse)?;
-
-    if config.database.uri == "unset" {
-      return Err(SettingsError::NotSet("Database uri")).into_report();
+    #[derive(Debug, Deserialize)]
+    #[serde(field_identifier, rename_all = "snake_case")]
+    enum Field {
+      User,
+      Password,
+      Host,
+      Port,
+      Database,
+      Uri,
     }
 
-    if config.bot.token == "unset" {
-      return Err(SettingsError::NotSet("Bot token")).into_report();
-    }
+    impl<'de> serde::de::Visitor<'de> for DatabaseConnectionVisitor {
+      type Value = DatabaseConnection;
 
-    Ok(config)
-  }
-
-  /// Generates TOML documentation for [settings object].
-  ///
-  /// [settings object]: Settings
-  pub fn generate_docs() -> String {
-    doku::to_toml_fmt::<Self>(&Default::default())
-  }
-}
-
-impl Settings {
-  /// Builds the figment structure for Settings object.
-  fn figment() -> Figment {
-    // Figment allows you to use one of many methods handle configurations
-    // and combine them at once. I don't have to implement deserialization
-    // for both environment variables and config file.
-    let figment = Figment::new()
-      .merge(Toml::file(DEFAULT_CONFIG_FILE))
-      // 'DATABASE_URL' is an alias for 'POKEPET_DATABASE_URI'
-      .merge(
-        Env::raw()
-          .only(&["DATABASE_URL"])
-          .map(|_| "database.uri".into()),
-      )
-      .merge(Env::prefixed("POKEPET_").split("_").map(|v| {
-        if let Some(alias) = PREFIX_ENV_ALIASES.get(v.as_str()) {
-          alias
-        } else {
-          v
-        }
-        .into()
-      }));
-
-    // I don't know why it works that way
-    BOT_TOKEN_ALIASES.iter().fold(figment, |f, alias| {
-      f.merge(Env::raw().only(&[alias]).map(|_| "bot.token".into()))
-    })
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::Settings;
-  use super::BOT_TOKEN_ALIASES;
-
-  use figment::Jail;
-
-  fn generate_bot_token() -> String {
-    // this is to fix the error
-    let mut random_value = rand::random::<u64>().to_string();
-    random_value.push('c');
-    random_value
-  }
-
-  #[test]
-  fn prefix_env_aliases() {
-    Jail::expect_with(|jail| {
-      const POOL_TIMEOUT_SECS: u64 = 10;
-      const POOL_SIZE: u64 = 30;
-
-      let generated_token = generate_bot_token();
-      jail.set_env("POKEPET_DATABASE_POOL_TIMEOUT_SECS", POOL_TIMEOUT_SECS);
-      jail.set_env("POKEPET_DATABASE_POOL_SIZE", POOL_SIZE);
-      jail.set_env("POKEPET_BOT_TOKEN", &generated_token);
-
-      let settings = Settings::figment().extract::<Settings>().unwrap();
-      assert_eq!(settings.database.pool_timeout_secs.get(), POOL_TIMEOUT_SECS);
-      assert_eq!(settings.database.pool_size.get(), POOL_SIZE);
-      assert_eq!(settings.bot.token, generated_token);
-
-      Ok(())
-    });
-  }
-
-  #[test]
-  fn bot_token_aliases() {
-    // This to avoid false positives
-    Jail::expect_with(|jail| {
-      for bot_token_alias in BOT_TOKEN_ALIASES {
-        let random_value = generate_bot_token();
-        jail.set_env(bot_token_alias, &random_value);
-
-        let settings = Settings::figment().extract::<Settings>().unwrap();
-        assert_eq!(settings.bot.token, random_value);
-
-        // reset that thing
-        jail.set_env(bot_token_alias, "");
+      fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("database connection (uri or parts)")
       }
-      Ok(())
-    });
+
+      fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+      where
+        A: serde::de::MapAccess<'de>,
+      {
+        let mut user = None;
+        let mut password = None;
+        let mut host = None;
+        let mut port = None;
+        let mut database = None;
+
+        let mut has_parts_like_field = false;
+        while let Some(key) = map.next_key::<Field>()? {
+          match key {
+            Field::Uri => {
+              if has_parts_like_field {
+                return Err(SerdeError::custom(
+                  "'uri' is found but it is deserializing other connection parts",
+                ));
+              }
+              return Ok(DatabaseConnection::Uri(map.next_value()?));
+            }
+            Field::User => {
+              if user.is_some() {
+                return Err(SerdeError::duplicate_field("user"));
+              }
+              user = Some(map.next_value()?);
+            }
+            Field::Password => {
+              if password.is_some() {
+                return Err(SerdeError::duplicate_field("password"));
+              }
+              password = Some(map.next_value()?);
+            }
+            Field::Host => {
+              if host.is_some() {
+                return Err(SerdeError::duplicate_field("host"));
+              }
+              host = Some(map.next_value()?);
+            }
+            Field::Port => {
+              if port.is_some() {
+                return Err(SerdeError::duplicate_field("port"));
+              }
+              port = Some(map.next_value()?);
+            }
+            Field::Database => {
+              if database.is_some() {
+                return Err(SerdeError::duplicate_field("database"));
+              }
+              database = Some(map.next_value()?);
+            }
+          }
+          has_parts_like_field = true;
+        }
+
+        let mut parts = DatabaseConnectionParts::default();
+        if let Some(value) = user {
+          parts.user = value;
+        }
+        if let Some(value) = password {
+          parts.password = value;
+        }
+        if let Some(value) = host {
+          parts.host = value;
+        }
+        if let Some(value) = port {
+          parts.port = value;
+        }
+        if let Some(value) = database {
+          parts.database = value;
+        }
+
+        Ok(DatabaseConnection::Parts(parts))
+      }
+    }
+
+    deserializer.deserialize_map(DatabaseConnectionVisitor)
+  }
+}
+
+impl std::fmt::Debug for DatabaseConnection {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Parts(n) => std::fmt::Debug::fmt(&n, f),
+      Self::Uri(..) => write!(f, "Uri(***)"),
+    }
+  }
+}
+
+// Not a bulletproof solution for implementing untagged variants with doku toml
+impl Document for DatabaseConnection {
+  fn ty() -> doku::Type {
+    use doku::{Field, Fields, Type, TypeKind};
+
+    let mut fields = match DatabaseConnectionParts::ty().kind {
+      TypeKind::Struct {
+        fields: Fields::Named { fields },
+        ..
+      } => fields,
+      _ => unreachable!(),
+    };
+
+    fields.iter_mut().next().unwrap().1.ty.comment = Some("or");
+    fields.insert(
+      0,
+      (
+        "uri",
+        Field {
+          ty: Type {
+            comment: None,
+            example: Some(doku::Example::Simple("postgres://postgres@localhost")),
+            metas: Default::default(),
+            tag: None,
+            serializable: true,
+            deserializable: true,
+            kind: <String as Document>::ty().kind,
+          },
+          flattened: false,
+          aliases: &[],
+        },
+      ),
+    );
+
+    // Getting fields from Uri and Parts variant
+    Type::from(TypeKind::Struct {
+      fields: Fields::Named { fields },
+      transparent: false,
+    })
   }
 }

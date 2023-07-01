@@ -11,6 +11,10 @@ repository.workspace = true
 pokepet-db.workspace = true
 pokepet-shared.workspace = true
 
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = "*"
+
 [build-dependencies]
 # To print out default data with doku and save it to config/example.toml
 pokepet-shared.workspace = true

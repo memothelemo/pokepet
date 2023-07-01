@@ -1,0 +1,30 @@
+[bot]
+token = "string"
+
+[database]
+# Method to connect to the database, either by
+# refering to the URI or parts with user, password,
+# and other fields.
+uri = "postgres://postgres@localhost"
+
+# or
+user = "postgres"
+password = "string"
+host = "localhost"
+port = 5432
+database = "pokepet"
+pool_size = 5
+pool_timeout_secs = 5
+
+# It enforces the program to connect to the database
+# with SSL/TLS encryption.
+# 
+# *If the connecting to the database with SSL/TLS
+# encryption is not supported, then it will go back
+# to the regular protocol.*
+# 
+# **NOTE: If you use URI as your method to connect
+# to the database and set something with enforce_tls field,
+# your preferred SSL/TLS method in URI will be overriden.**
+# Optional
+enforce_tls = true
