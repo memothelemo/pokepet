@@ -1,6 +1,7 @@
 FROM rust:1.70.0-slim-bullseye as builder
 
 WORKDIR /workspace
+COPY . .
 
 # Update and install required dependencies
 RUN apt-get update && \
