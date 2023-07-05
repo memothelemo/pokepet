@@ -1,0 +1,28 @@
+{
+    "name": "Pokepet Development Environment",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "tamasfe.even-better-toml",
+                "serayuzgur.crates",
+                "matklad.rust-analyzer",
+                "vadimcn.vscode-lldb"
+            ],
+            "settings": {
+                "lldb.executable": "/usr/bin/lldb",
+				// VS Code don't watch files under ./target
+				"files.watcherExclude": {
+					"**/target/**": true
+				},
+                "[rust]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+                }
+            }
+        }
+    },
+    "service": "dev",
+    "forwardPorts": [5432],
+    "dockerComposeFile": "docker-compose.yml"
+}
