@@ -8,3 +8,9 @@ publish.workspace = true
 
 [dependencies]
 diesel.workspace = true
+dotenvy.workspace = true
+
+# TODO: Migrate to sqlx
+# fix with x86_64-linux-unknown-musl
+pq-sys = { version = "*" }
+openssl = "*"
