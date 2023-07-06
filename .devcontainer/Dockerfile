@@ -3,22 +3,12 @@ FROM clux/muslrust:1.70.0 as builder
 WORKDIR /workspace
 COPY . .
 
-# Update and install required dependencies, not sure which
-# one it is redundant
-RUN apt-get update && \
-  apt-get install -y \
-  curl \
-  git \
-  gnupg2 \
-  jq \
-  sudo \
-  build-essential \
-  openssl \
-  libpq-dev \
-  && sudo rm -rf /var/lib/apt/lists/*
+# clux/muslrust is not perfect, we need to install missing dependencies
+# that rustc needs in order to compile with musl successfully (sort of)
+RUN rustup target add x86_64-unknown-linux-musl
 
-# Install diesel-cli
-RUN cargo install diesel_cli --no-default-features --features postgres
+# Install sqlx-cli
+RUN cargo install sqlx-cli --version "0.7.0" --no-default-features --features rustls,postgres
 
 # Compile the project first or ignore for now
 RUN cargo build || :

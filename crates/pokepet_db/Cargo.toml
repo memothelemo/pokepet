@@ -1,5 +1,5 @@
 [package]
-name = "pokepet-db"
+name = "pokepet_db"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,10 +7,13 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-diesel.workspace = true
-dotenvy.workspace = true
 
-# TODO: Migrate to sqlx
-# fix with x86_64-linux-unknown-musl
-pq-sys = { version = "*" }
-openssl = "*"
+[dependencies.sqlx]
+git = "https://github.com/memothelemo/sqlx"
+features = [
+	"runtime-tokio",
+	# musl dev environment fails to link with openssl despite
+	# openssl is supported according to the base image page
+	"tls-rustls",
+	"postgres"
+]
