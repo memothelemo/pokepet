@@ -1,4 +1,6 @@
-FROM clux/muslrust:1.70.0 as builder
+ARG RUST_VERSION="1.70.0"
+
+FROM clux/muslrust:$RUST_VERSION as builder
 
 WORKDIR /workspace
 COPY . .
@@ -6,6 +8,9 @@ COPY . .
 # clux/muslrust is not perfect, we need to install missing dependencies
 # that rustc needs in order to compile with musl successfully (sort of)
 RUN rustup target add x86_64-unknown-linux-musl
+
+# rustfmt
+RUN rustup component add $RUST_VERSION-x86_64-unknown-linux-gnu
 
 # Install sqlx-cli
 RUN cargo install sqlx-cli --version "0.7.0" --no-default-features --features rustls,postgres
