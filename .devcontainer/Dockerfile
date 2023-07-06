@@ -21,4 +21,4 @@ RUN apt-get update && \
 RUN rustup component add rustfmt
 
 # Install diesel-cli
-RUN cargo install diesel_cli --no-default-features --features postgres
+RUN cargo install diesel_cli --no-default-features --features postgres --target x86_64-unknown-linux-gnu
