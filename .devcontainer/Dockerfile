@@ -1,9 +1,10 @@
-FROM rust:1.70.0-slim-bullseye as builder
+FROM clux/muslrust:1.70.0 as builder
 
 WORKDIR /workspace
 COPY . .
 
-# Update and install required dependencies
+# Update and install required dependencies, not sure which
+# one it is redundant
 RUN apt-get update && \
   apt-get install -y \
   curl \
