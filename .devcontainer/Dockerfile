@@ -17,14 +17,8 @@ RUN apt-get update && \
   libpq-dev \
   && sudo rm -rf /var/lib/apt/lists/*
 
-# We need also to install rustfmt for auto-formatting
-RUN rustup component add rustfmt
-
-# Acquiring missing stuff from x86_64-unknown-linux-musl
-RUN rustup target add x86_64-unknown-linux-musl
-
 # Install diesel-cli
-RUN cargo install diesel_cli --no-default-features --features postgres --target x86_64-unknown-linux-gnu
+RUN cargo install diesel_cli --no-default-features --features postgres
 
 # Compile the project first or ignore for now
 RUN cargo build || :
