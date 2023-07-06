@@ -16,5 +16,8 @@ RUN apt-get update && \
   libpq-dev \
   && sudo rm -rf /var/lib/apt/lists/*
 
+# We need also to install rustfmt for auto-formatting
+RUN rustup component add rustfmt
+
 # Install diesel-cli
 RUN cargo install diesel_cli --no-default-features --features postgres

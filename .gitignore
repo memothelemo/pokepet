@@ -1,1 +1,9 @@
+# local build files
 /target
+
+# private credientals
+.env
+config/config.toml
+
+# redis saved data
+dump.rdb
